@@ -3,6 +3,7 @@ import org.bytedeco.gradle.javacpp.BuildTask
 plugins {
     id("java")
     alias(libs.plugins.gradle.javacpp.build)
+    alias(libs.plugins.cmake)
 }
 
 group = "io.github.singlerr"
@@ -14,6 +15,8 @@ repositories {
 
 val javacppPlatform: String by project
 val targetCpu: String by project
+
+
 dependencies {
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)
@@ -24,66 +27,38 @@ dependencies {
 tasks.test {
     useJUnitPlatform()
 }
+val installPath = "${layout.buildDirectory.file("webrtc").get()}"
+val cppIncludePath = "$installPath/include"
+val apiIncludePath = "src/main/native/webrtc/api"
+val cppLibPath = "$installPath/lib"
 
-val cppIncludePath = "$buildDir/$javacppPlatform/include"
-val cppLibPath = "$buildDir/$javacppPlatform/lib"
+
 
 tasks.withType<BuildTask> {
     doNotTrackState("")
-    includePath = arrayOf(cppIncludePath)
+    includePath = arrayOf(cppIncludePath, apiIncludePath)
     linkPath = arrayOf(cppLibPath)
 }
 
 
-val copyLibFile by tasks.registering(Copy::class) {
-    val srcPath = "$buildDir/${javacppPlatform}/webrtc/src"
-    val libPath = "$srcPath/out/$targetCpu/obj"
-    val libName = "webrtc.lib"
-    from("$libPath/$libName")
-    destinationDir = file(cppLibPath)
-}
-
-val copyHeaders by tasks.registering(Copy::class) {
-    val srcPath = "$buildDir/${javacppPlatform}/webrtc/src"
-    include("**/*.h")
-    from(srcPath) {
-        exclude("src/base/**")
-        exclude("src/build/**")
-        exclude("src/build_overrides/**")
-        exclude("src/buildtools/**")
-        exclude("src/data/**")
-        exclude("src/docs/**")
-        exclude("src/examples/**")
-        exclude("src/out/**")
-        exclude("src/resources/**")
-        exclude("src/sdk/**")
-        exclude("src/stats/**")
-        exclude("src/style-guide/**")
-        exclude("src/test/**")
-        exclude("src/testing/**")
-        exclude("src/tools/**")
-        exclude("src/tools_webrtc/**")
-        exclude("test/**")
-
-        filter { line ->
-            line.replace("src/third_party/(a[c-z].*|[b-k]|l[a-h|k-z].*|lib[a-x].*|[m-z])", "")
+cmake {
+    targets {
+        create("compileNatives") {
+            cmakeLists.set(file("src/main/native/CMakeLists.txt"))
+            cmakeArgs.add("-DWEBRTC_SRC_DIR=$installPath")
+            cmakeArgs.add("-DWEBRTC_INSTALL_DIR=${installPath}")
         }
-
-        includeEmptyDirs = false
     }
-    into(cppIncludePath)
 }
 
 tasks.named<BuildTask>("javacppBuildCommand") {
-    buildCommand = arrayOf("cmd", "/c", "build.bat")
-
-    finalizedBy(copyHeaders)
-    finalizedBy(copyLibFile)
+    buildCommand = emptyArray<String>()
+    dependsOn("cmakeBuild")
 }
 
 tasks.named<BuildTask>("javacppBuildParser") {
     classOrPackageNames = arrayOf("org.bytedeco.webrtc.presets.*")
-    outputDirectory = file("$buildDir/generated/sources/javacpp")
+    outputDirectory = file("${project.layout.buildDirectory.get()}/generated/sources/javacpp")
 }
 
 tasks.named<BuildTask>("javacppBuildCompiler") {

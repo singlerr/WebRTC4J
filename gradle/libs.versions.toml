@@ -2,6 +2,7 @@
 javacpp = "1.5.11"
 junit = "5.10.0"
 gradle-javacpp-build = "1.5.10"
+cmake = "1.2.2"
 
 [libraries]
 javacpp = { group = "org.bytedeco", name = "javacpp", version.ref = "javacpp" }
@@ -10,3 +11,4 @@ junit-jupiter = { group = "org.junit.jupiter", name = "junit-jupiter" }
 
 [plugins]
 gradle-javacpp-build = { id = "org.bytedeco.gradle-javacpp-build", version.ref = "gradle-javacpp-build" }
+cmake = { id = "io.github.tomtzook.gradle-cmake", version.ref = "cmake" }

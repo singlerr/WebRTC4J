@@ -23,5 +23,6 @@ public class PeerConnection implements InfoMapper {
     @Override
     public void map(InfoMap infoMap) {
         infoMap.put(new Info("RTC_EXPORT").cppTypes().annotations());
+        infoMap.put(new Info("rtc::scoped_refptr").skip().annotations("@ScopedRefPtr"));
     }
 }
