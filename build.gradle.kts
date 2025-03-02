@@ -1,3 +1,4 @@
+import com.github.tomtzook.gcmake.targets.CmakeTarget
 import org.bytedeco.gradle.javacpp.BuildTask
 
 plugins {
@@ -16,7 +17,6 @@ repositories {
 val javacppPlatform: String by project
 val targetCpu: String by project
 
-
 dependencies {
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)
@@ -27,11 +27,14 @@ dependencies {
 tasks.test {
     useJUnitPlatform()
 }
-val installPath = "${layout.buildDirectory.file("webrtc").get()}"
-val cppIncludePath = "$installPath/include"
-val apiIncludePath = "src/main/native/webrtc/api"
-val cppLibPath = "$installPath/lib"
 
+
+val buildPath = projectDir
+val installPath = "${buildPath.resolve("webrtc")}"
+val cppIncludePath = "$installPath/include"
+val apiIncludePath = "$projectDir/src/main/native/webrtc/api"
+val cppLibPath = "$installPath/lib"
+val buildType = "Release"
 
 
 tasks.withType<BuildTask> {
@@ -42,11 +45,14 @@ tasks.withType<BuildTask> {
 
 
 cmake {
+
     targets {
         create("compileNatives") {
             cmakeLists.set(file("src/main/native/CMakeLists.txt"))
+            generatorArgs.add("install")
             cmakeArgs.add("-DWEBRTC_SRC_DIR=$installPath")
             cmakeArgs.add("-DWEBRTC_INSTALL_DIR=${installPath}")
+            cmakeArgs.add("-DCMAKE_BUILD_TYPE=${buildType}")
         }
     }
 }

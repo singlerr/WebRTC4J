@@ -9,12 +9,16 @@ import org.bytedeco.javacpp.tools.InfoMap;
 import org.bytedeco.javacpp.tools.InfoMapper;
 
 @Properties(
-        value = @Platform(include = "api/peer_connection_interface.h", link = "webrtc.lib", includepath = ""),
+        value = @Platform(
+                include = {"api/peer_connection_interface.h", "api/create_peerconnection_factory.h", "scoped_refptr_adapter.h"},
+                link = "webrtc.lib",
+                includepath = "api/",
+                preloadpath = "api/."),
         target = "org.bytedeco.webrtc",
         global = "org.bytedeco.webrtc.global.webrtc"
 )
 @NoOffset
-public class PeerConnection implements InfoMapper {
+public class PeerConnectionLibrary implements InfoMapper {
 
     static {
         Loader.checkVersion("org.bytedeco", "webrtc");
@@ -22,7 +26,8 @@ public class PeerConnection implements InfoMapper {
 
     @Override
     public void map(InfoMap infoMap) {
-        infoMap.put(new Info("RTC_EXPORT").cppTypes().annotations());
         infoMap.put(new Info("rtc::scoped_refptr").skip().annotations("@ScopedRefPtr"));
+        infoMap.put(new Info("RTC_EXPORT").cppTypes().annotations());
+
     }
 }
